@@ -1,4 +1,6 @@
-# MATON Adaptive AI Tutor
+# MATON Kaye
+
+Snap your notebook, get a Kreyòl tutor.
 
 Built for the Meta Global AI Developer Hackathon 2026 (Indie Developer track, "Build for Your World").
 

@@ -53,7 +53,7 @@ export function App() {
     <div className="app">
       <header>
         <img src="/maton-logo.png" alt="MATON" className="logo" />
-        <span className="tag">Tutè kaye</span>
+        <span className="tag">MATON Kaye</span>
       </header>
 
       <main>
