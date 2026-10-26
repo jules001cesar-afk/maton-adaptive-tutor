@@ -40,6 +40,8 @@ export function refineStepBox(step: PixelBox, sam: PixelBox[], marginRatio = 0.0
   return { box: union(inside), refined: true };
 }
 
+const MIN_WIDTH_RATIO = 0.2;
+
 const centerX = (b: PixelBox) => (b.x1 + b.x2) / 2;
 const centerY = (b: PixelBox) => (b.y1 + b.y2) / 2;
 const union = (boxes: PixelBox[]): PixelBox => ({
@@ -73,12 +75,21 @@ export function refineSteps(steps: PixelBox[], numbers: PixelBox[], equals: Pixe
       .map(centerX)
       .sort((a, b) => a - b);
     if (signs.length !== line.length - 1) continue; // cannot tell the borders apart
+    // Each "=" must sit between the two steps it separates; otherwise SAM picked up
+    // something else (a fraction bar, a stray mark) and the borders cannot be trusted.
+    const ordered = signs.every((x, k) => x > centerX(steps[line[k]]) && x < centerX(steps[line[k + 1]]));
+    if (!ordered) continue;
     const inBand = numbers.filter((n) => centerY(n) >= band.y1 - 50 && centerY(n) <= band.y2 + 50);
     line.forEach((stepIndex, k) => {
       const left = k === 0 ? -Infinity : signs[k - 1];
       const right = k === line.length - 1 ? Infinity : signs[k];
       const mine = inBand.filter((n) => centerX(n) > left && centerX(n) < right);
-      if (mine.length) result[stepIndex] = { box: union(mine), refined: true };
+      if (!mine.length) return;
+      const box = union(mine);
+      // A step shrunk to a sliver of the model's box means a single digit was caught.
+      const coarse = steps[stepIndex];
+      if (box.x2 - box.x1 < MIN_WIDTH_RATIO * (coarse.x2 - coarse.x1)) return;
+      result[stepIndex] = { box, refined: true };
     });
   }
   return result;

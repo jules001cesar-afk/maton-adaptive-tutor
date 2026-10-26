@@ -105,3 +105,24 @@ test("snaps chained steps to the borders SAM finds between them", async () => {
   assert.deepEqual(b.box, { x1: 762, y1: 379, x2: 1306, y2: 500 }); // now includes "+3"
   assert.deepEqual(c.box, { x1: 1376, y1: 358, x2: 1451, y2: 531 }); // just "2/5"
 });
+
+test("ignores '=' borders that do not sit between the steps", async () => {
+  const { refineSteps } = await import("../shared/refine.ts");
+  // Same photo as above, but SAM also reports a fraction bar as an "=" inside step 2.
+  // Trusting it shrank step 2 to the single digit "3" during a live run.
+  const steps = [
+    { x1: 138, y1: 428, x2: 573, y2: 662 },
+    { x1: 593, y1: 392, x2: 1247, y2: 524 },
+    { x1: 1248, y1: 384, x2: 1479, y2: 560 },
+  ];
+  const n = (x1: number, y1: number, x2: number, y2: number) => ({ x1, y1, x2, y2 });
+  const numbers = [
+    n(171, 407, 277, 524), n(1376, 358, 1445, 421), n(1256, 397, 1306, 457), n(991, 379, 1018, 484),
+    n(554, 499, 604, 577), n(1393, 455, 1451, 531), n(220, 563, 301, 659), n(801, 399, 848, 466),
+    n(1109, 382, 1154, 500), n(492, 363, 576, 463), n(762, 386, 815, 492), n(925, 394, 977, 468),
+    n(1141, 397, 1205, 465),
+  ];
+  const equals = [n(679, 464, 724, 483), n(785, 470, 805, 480)];
+  const [, b] = refineSteps(steps, numbers, equals);
+  assert.ok(b.box.x2 - b.box.x1 > 300, `step 2 too narrow: ${JSON.stringify(b.box)}`);
+});
