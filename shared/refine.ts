@@ -52,24 +52,86 @@ const union = (boxes: PixelBox[]): PixelBox => ({
 });
 
 /**
- * Tight boxes for every step. When steps are written on one line and chained by "=",
- * the "=" signs SAM finds are the true borders between steps (the model's boxes can
- * drift sideways), so each number goes to the segment between two "=" signs.
- * Other layouts (one step per line) fall back to refineStepBox.
+ * Muse Spark's boxes can sit a little off on the page, mostly vertically (on portrait
+ * photos they drift down, by a whole line on tightly written work). Find the vertical
+ * stretch and shift that make the model's boxes cover the most SAM numbers, with every
+ * step covering at least one, and prefer the smallest correction on ties.
+ */
+export function alignToNumbers(steps: PixelBox[], numbers: PixelBox[]): PixelBox[] {
+  if (!steps.length || !numbers.length) return steps;
+  const top = Math.min(...steps.map((s) => s.y1));
+  const bottom = Math.max(...steps.map((s) => s.y2));
+  const span = Math.max(bottom - top, 1);
+  const centers = numbers.map((n) => ({ x: centerX(n), y: centerY(n) }));
+  const move = (b: PixelBox, k: number, dy: number): PixelBox => ({
+    x1: b.x1,
+    x2: b.x2,
+    y1: top + (b.y1 - top) * k + dy,
+    y2: top + (b.y2 - top) * k + dy,
+  });
+  let best = { score: -1, cost: Infinity, k: 1, dy: 0 };
+  for (let k = 0.8; k <= 1.2001; k += 0.025) {
+    for (let f = -0.6; f <= 0.6001; f += 0.02) {
+      const dy = f * span;
+      const boxes = steps.map((s) => move(s, k, dy));
+      const covered = boxes.map((b) => centers.filter((c) => c.x >= b.x1 && c.x <= b.x2 && c.y >= b.y1 && c.y <= b.y2).length);
+      const inside = centers.filter((c) => boxes.some((b) => c.x >= b.x1 && c.x <= b.x2 && c.y >= b.y1 && c.y <= b.y2)).length;
+      const score = inside + (covered.every((n) => n > 0) ? numbers.length : 0);
+      const cost = Math.abs(k - 1) + Math.abs(f);
+      if (score > best.score || (score === best.score && cost < best.cost)) best = { score, cost, k, dy };
+    }
+  }
+  return steps.map((s) => move(s, best.k, best.dy));
+}
+
+/**
+ * Tight boxes for every step. The model's boxes are first aligned to the numbers SAM
+ * found. When steps are written on one line and chained by "=", the "=" signs are the
+ * true borders between steps (the model's boxes can drift sideways), so each number
+ * goes to the segment between two "=" signs. Otherwise each number goes to the one
+ * step box that holds it (the nearest centre when boxes overlap), so marks never
+ * share a number.
  */
 export function refineSteps(steps: PixelBox[], numbers: PixelBox[], equals: PixelBox[]): { box: PixelBox; refined: boolean }[] {
-  const result = steps.map((s) => refineStepBox(s, numbers));
+  const aligned = alignToNumbers(steps, numbers);
+  const owner = numbers.map((n) => {
+    const cx = centerX(n);
+    const cy = centerY(n);
+    const holders = aligned
+      .map((b, i) => ({ i, b }))
+      .filter(({ b }) => {
+        const mx = (b.x2 - b.x1) * 0.08;
+        const my = (b.y2 - b.y1) * 0.08;
+        return cx >= b.x1 - mx && cx <= b.x2 + mx && cy >= b.y1 - my && cy <= b.y2 + my;
+      });
+    if (!holders.length) return -1;
+    holders.sort((a, b) => Math.hypot(centerX(a.b) - cx, centerY(a.b) - cy) - Math.hypot(centerX(b.b) - cx, centerY(b.b) - cy));
+    return holders[0].i;
+  });
+  const result = aligned.map((box, i) => {
+    const mine = numbers.filter((_, j) => owner[j] === i);
+    if (!mine.length) return { box, refined: false };
+    const tight = union(mine);
+    // SAM missed part of the step (only the "x" of "x = 17"): keep the model's width,
+    // unless that would reach into numbers that belong to another step.
+    if (tight.x2 - tight.x1 < 0.5 * (box.x2 - box.x1)) {
+      const wide = union([tight, box]);
+      const takesOthers = numbers.some((n, j) => owner[j] !== i && owner[j] !== -1 && centerX(n) > wide.x1 && centerX(n) < wide.x2 && centerY(n) > wide.y1 && centerY(n) < wide.y2);
+      if (!takesOthers) return { box: wide, refined: true };
+    }
+    return { box: tight, refined: true };
+  });
   // Group steps that share a line (their vertical ranges overlap), in reading order.
   const lines: number[][] = [];
-  for (const i of steps.map((_, i) => i).sort((a, b) => centerY(steps[a]) - centerY(steps[b]))) {
-    const line = lines.find((l) => l.some((j) => steps[j].y1 < steps[i].y2 && steps[i].y1 < steps[j].y2));
+  for (const i of aligned.map((_, i) => i).sort((a, b) => centerY(aligned[a]) - centerY(aligned[b]))) {
+    const line = lines.find((l) => l.some((j) => aligned[j].y1 < aligned[i].y2 && aligned[i].y1 < aligned[j].y2));
     if (line) line.push(i);
     else lines.push([i]);
   }
   for (const line of lines) {
     if (line.length < 2) continue;
-    line.sort((a, b) => centerX(steps[a]) - centerX(steps[b]));
-    const band = union(line.map((i) => steps[i]));
+    line.sort((a, b) => centerX(aligned[a]) - centerX(aligned[b]));
+    const band = union(line.map((i) => aligned[i]));
     const signs = equals
       .filter((e) => centerY(e) >= band.y1 && centerY(e) <= band.y2)
       .map(centerX)
@@ -77,7 +139,7 @@ export function refineSteps(steps: PixelBox[], numbers: PixelBox[], equals: Pixe
     if (signs.length !== line.length - 1) continue; // cannot tell the borders apart
     // Each "=" must sit between the two steps it separates; otherwise SAM picked up
     // something else (a fraction bar, a stray mark) and the borders cannot be trusted.
-    const ordered = signs.every((x, k) => x > centerX(steps[line[k]]) && x < centerX(steps[line[k + 1]]));
+    const ordered = signs.every((x, k) => x > centerX(aligned[line[k]]) && x < centerX(aligned[line[k + 1]]));
     if (!ordered) continue;
     const inBand = numbers.filter((n) => centerY(n) >= band.y1 - 50 && centerY(n) <= band.y2 + 50);
     line.forEach((stepIndex, k) => {
@@ -87,7 +149,7 @@ export function refineSteps(steps: PixelBox[], numbers: PixelBox[], equals: Pixe
       if (!mine.length) return;
       const box = union(mine);
       // A step shrunk to a sliver of the model's box means a single digit was caught.
-      const coarse = steps[stepIndex];
+      const coarse = aligned[stepIndex];
       if (box.x2 - box.x1 < MIN_WIDTH_RATIO * (coarse.x2 - coarse.x1)) return;
       result[stepIndex] = { box, refined: true };
     });

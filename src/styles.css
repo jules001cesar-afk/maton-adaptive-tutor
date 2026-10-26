@@ -461,3 +461,9 @@ footer {
   color: var(--muted);
   text-align: center;
 }
+
+.math sup {
+  align-self: flex-start;
+  font-size: 0.55em;
+  margin-left: -0.2em;
+}

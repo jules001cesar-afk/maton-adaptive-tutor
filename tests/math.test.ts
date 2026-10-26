@@ -126,3 +126,28 @@ test("ignores '=' borders that do not sit between the steps", async () => {
   const [, b] = refineSteps(steps, numbers, equals);
   assert.ok(b.box.x2 - b.box.x1 > 300, `step 2 too narrow: ${JSON.stringify(b.box)}`);
 });
+
+test("puts each step back on its own line when the model's boxes drift down", async () => {
+  const { refineSteps } = await import("../shared/refine.ts");
+  const n = (x1: number, x2: number, y1: number, y2: number) => ({ x1, y1, x2, y2 });
+  // Real SAM boxes from a phone photo of "x + 5 = 12 / x = 12 + 5 / x = 17" (one step
+  // per line). The model's boxes are pushed one line down, as seen on the phone.
+  const numbers = [n(558, 589, 234, 280), n(589, 644, 332, 377), n(306, 364, 405, 460), n(290, 356, 307, 369), n(290, 368, 206, 276), n(450, 493, 222, 270), n(584, 635, 237, 289)];
+  const steps = [n(290, 663, 298, 375), n(287, 648, 391, 473), n(299, 509, 498, 567)];
+  const [a, b, c] = refineSteps(steps, numbers, []);
+  const line = (box: { y1: number; y2: number }) => (box.y1 + box.y2) / 2;
+  assert.ok(line(a.box) > 200 && line(a.box) < 290, `step 1 not on line 1: ${JSON.stringify(a.box)}`);
+  assert.ok(line(b.box) > 300 && line(b.box) < 380, `step 2 not on line 2: ${JSON.stringify(b.box)}`);
+  assert.ok(line(c.box) > 400 && line(c.box) < 470, `step 3 not on line 3: ${JSON.stringify(c.box)}`);
+  assert.ok(c.box.x2 - c.box.x1 > 150, "step 3 should cover all of x = 17, not just the x");
+});
+
+test("never gives the same number to two overlapping steps", async () => {
+  const { refineSteps } = await import("../shared/refine.ts");
+  const n = (x1: number, x2: number, y1: number, y2: number) => ({ x1, y1, x2, y2 });
+  // "47 + 38 = 75" where the model's two boxes overlap and SAM found no "=".
+  const numbers = [n(100, 180, 100, 160), n(230, 310, 100, 160), n(420, 500, 100, 160)];
+  const steps = [n(90, 330, 90, 170), n(200, 520, 90, 170)];
+  const [a, b] = refineSteps(steps, numbers, []);
+  assert.ok(a.box.x2 <= b.box.x1 || b.box.x2 <= a.box.x1 || a.box.x2 - b.box.x1 < 40, `marks overlap: ${JSON.stringify([a.box, b.box])}`);
+});
