@@ -2,10 +2,24 @@
   "name": "maton-adaptive-tutor",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22.18" },
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "test": "node --test \"tests/*.test.ts\"",
     "diagnose": "node --env-file=.dev.vars scripts/diagnose.ts",
     "eval": "node --env-file=.dev.vars scripts/eval.ts"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.23",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "4.5.2",
+    "typescript": "5.8.3",
+    "vite": "6.4.4",
+    "wrangler": "4.147.0"
   }
 }

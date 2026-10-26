@@ -1,0 +1,63 @@
+{
+  "source": "recorded",
+  "model": "muse-spark-1.3",
+  "seconds": 11.596,
+  "transcription": "1/2 + 1/3 = (1+1)/(2+3) = 2/5",
+  "operation": "fractions",
+  "misconceptionId": "frac_add_across",
+  "kreyol": {
+    "encouragement": "Ou ekri tout etap kalkil ou a byen klè, sa ede konprann fason ou reflechi.",
+    "studentAction": "Ou ajoute nimewo ki anlè fraksyon yo ansanm, epi ou ajoute nimewo ki anba yo ansanm tou.",
+    "concept": "Nimeratè a se nimewo ki anlè liy fraksyon an. Denominatè a se nimewo ki anba liy fraksyon an, li di an konbyen pati egal nou koupe yon antye. Pou nou ajoute fraksyon, fòk tout pati yo gen menm gwosè, kidonk fòk yo gen menm denominatè anvan nou mete nimeratè yo ansanm.",
+    "example": "Mwatye yon mango ak yon tyè menm mango a pa menm gwosè moso, kidonk nou pa ka konte yo tankou de moso parèy.",
+    "question": "Si de fraksyon pa gen menm denominatè, kisa ou dwe fè anvan ou ajoute nimeratè yo?",
+    "hint": "Toujou chèche menm denominatè a anvan ou mete nimeratè yo ansanm."
+  },
+  "steps": [
+    {
+      "text": "1/2 + 1/3",
+      "status": "correct",
+      "checkedBy": "code",
+      "box": {
+        "x1": 137,
+        "y1": 291,
+        "x2": 483,
+        "y2": 527
+      },
+      "preciseMark": true
+    },
+    {
+      "text": "(1+1)/(2+3)",
+      "status": "wrong",
+      "checkedBy": "code",
+      "box": {
+        "x1": 640,
+        "y1": 303,
+        "x2": 1045,
+        "y2": 388
+      },
+      "preciseMark": true
+    },
+    {
+      "text": "2/5",
+      "status": "wrong",
+      "checkedBy": "code",
+      "box": {
+        "x1": 1100,
+        "y1": 286,
+        "x2": 1161,
+        "y2": 424
+      },
+      "preciseMark": true
+    }
+  ],
+  "marksFrom": "muse-spark+sam-3.1",
+  "practice": {
+    "problem": "2/3 + 1/2",
+    "level": 1
+  },
+  "recordedAt": "2026-10-26T18:46:49.572Z",
+  "photo": "/demo/notebook-1.jpg",
+  "width": 1200,
+  "height": 1600
+}

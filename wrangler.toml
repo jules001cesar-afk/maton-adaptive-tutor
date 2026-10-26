@@ -1,0 +1,4 @@
+# Local development only for now (npx wrangler pages dev). Nothing is deployed.
+name = "maton-adaptive-tutor"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
