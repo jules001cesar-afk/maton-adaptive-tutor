@@ -8,7 +8,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, extname } from "node:path";
 
 import { diagnoseWork } from "../shared/diagnose.ts";
-import { gridToPixels, refineSteps } from "../shared/refine.ts";
+import { gridToPixels, mergeBoxes, refineSteps } from "../shared/refine.ts";
 import { samBoxes } from "../shared/sam-client.ts";
 
 const apiKey = process.env.MODEL_API_KEY?.trim();
@@ -28,11 +28,13 @@ const base64 = (await readFile(photo)).toString("base64");
 const imageDataUrl = `data:${mime};base64,${base64}`;
 const sam = (prompt: string) => samBoxes({ apiKey, imageDataUrl, prompt }).then((r) => r.boxes);
 
-const [run, numbers, equals] = await Promise.all([
+const [run, printed, handwritten, equals] = await Promise.all([
   diagnoseWork({ photo: { mime, base64 } }, { apiKey }),
   sam("number"),
+  sam("handwritten number"),
   sam("equals sign"),
 ]);
+const numbers = mergeBoxes(printed, handwritten);
 const steps = run.diagnosis.steps.map((s, i) => ({
   text: s.text,
   correct: run.verification?.steps[i]?.matches ?? s.is_correct,
@@ -46,4 +48,4 @@ const out = `test-results/marks-${basename(photo, extname(photo))}.json`;
 await writeFile(out, JSON.stringify(result, null, 1));
 console.log(run.diagnosis.transcription);
 steps.forEach((s, i) => console.log(`  ${s.correct ? "ok " : "BAD"} ${s.text.padEnd(16)} model y ${Math.round(s.coarse.y1)}-${Math.round(s.coarse.y2)} x ${Math.round(s.coarse.x1)}-${Math.round(s.coarse.x2)} -> mark y ${Math.round(marks[i].box.y1)}-${Math.round(marks[i].box.y2)} x ${Math.round(marks[i].box.x1)}-${Math.round(marks[i].box.x2)}`));
-console.log(`SAM: ${numbers.length} numbers, ${equals.length} "=" | ${out}`);
+console.log(`SAM: ${numbers.length} numbers (${printed.length} + ${handwritten.length} before merge), ${equals.length} "=" | ${out}`);

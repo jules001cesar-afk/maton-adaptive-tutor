@@ -151,3 +151,10 @@ test("never gives the same number to two overlapping steps", async () => {
   const [a, b] = refineSteps(steps, numbers, []);
   assert.ok(a.box.x2 <= b.box.x1 || b.box.x2 <= a.box.x1 || a.box.x2 - b.box.x1 < 40, `marks overlap: ${JSON.stringify([a.box, b.box])}`);
 });
+
+test("merges the numbers from two SAM prompts without duplicates", async () => {
+  const { mergeBoxes } = await import("../shared/refine.ts");
+  const n = (x1: number, x2: number, y1: number, y2: number) => ({ x1, y1, x2, y2 });
+  const merged = mergeBoxes([n(0, 50, 0, 50), n(100, 150, 0, 50)], [n(2, 52, 1, 49), n(200, 250, 0, 50)]);
+  assert.equal(merged.length, 3);
+});

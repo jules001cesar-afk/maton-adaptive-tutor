@@ -1,8 +1,9 @@
 // Photo -> marked steps + Kreyòl explanation + next exercise.
-// Muse Spark and the two SAM 3.1 calls run at the same time; SAM only sharpens the
-// marks, so if it fails the model's own boxes are used.
+// Muse Spark and the SAM 3.1 calls run at the same time; SAM only sharpens the
+// marks, so if it fails the model's own boxes are used. Numbers are asked for twice
+// ("number" and "handwritten number"): on some phone photos only one of them finds any.
 import { diagnoseWork, type DiagnosisRun } from "./diagnose.ts";
-import { gridToPixels, refineSteps, type PixelBox } from "./refine.ts";
+import { gridToPixels, mergeBoxes, refineSteps, type PixelBox } from "./refine.ts";
 import { samBoxes } from "./sam-client.ts";
 import type { Level } from "./practice.ts";
 
@@ -32,11 +33,13 @@ export async function analyzePhoto(opts: {
   const imageDataUrl = `data:${opts.mime};base64,${opts.base64}`;
   const sam = (prompt: string) => samBoxes({ apiKey: opts.apiKey, imageDataUrl, prompt }).then((r) => r.boxes);
 
-  const [run, numbers, equals] = await Promise.all([
+  const [run, printed, handwritten, equals] = await Promise.all([
     diagnoseWork({ photo: { mime: opts.mime, base64: opts.base64 } }, { apiKey: opts.apiKey, level: opts.level }),
     sam("number").catch(() => null),
+    sam("handwritten number").catch(() => null),
     sam("equals sign").catch(() => null),
   ]);
+  const numbers = printed === null && handwritten === null ? null : mergeBoxes(printed ?? [], handwritten ?? []);
 
   const coarse = run.diagnosis.steps.map((s) => gridToPixels(s.box, opts.width, opts.height));
   const samOk = numbers !== null && equals !== null;

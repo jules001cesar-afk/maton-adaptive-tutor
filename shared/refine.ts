@@ -156,3 +156,15 @@ export function refineSteps(steps: PixelBox[], numbers: PixelBox[], equals: Pixe
   }
   return result;
 }
+
+/** Boxes from several SAM prompts, without the duplicates (same digit found twice). */
+export function mergeBoxes(...lists: PixelBox[][]): PixelBox[] {
+  const area = (b: PixelBox) => Math.max(0, b.x2 - b.x1) * Math.max(0, b.y2 - b.y1);
+  const overlap = (a: PixelBox, b: PixelBox) =>
+    Math.max(0, Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1)) * Math.max(0, Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1));
+  const kept: PixelBox[] = [];
+  for (const b of lists.flat()) {
+    if (!kept.some((k) => overlap(k, b) > 0.5 * Math.min(area(k), area(b)))) kept.push(b);
+  }
+  return kept;
+}
