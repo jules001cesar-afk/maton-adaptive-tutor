@@ -83,3 +83,25 @@ test("restores only unambiguous missing accents", () => {
   assert.equal(d.student_action_ht, "Ou te kle sou sa ou te fè.");
   assert.equal(d.guiding_question_ht, "Ki sa ou wè?");
 });
+
+test("snaps chained steps to the borders SAM finds between them", async () => {
+  const { refineSteps } = await import("../shared/refine.ts");
+  // Real boxes from test-photos/notebook-1.jpg: the model's step 3 box drifted onto the "3" of step 2.
+  const steps = [
+    { x1: 138, y1: 428, x2: 573, y2: 662 },
+    { x1: 593, y1: 392, x2: 1247, y2: 524 },
+    { x1: 1248, y1: 384, x2: 1479, y2: 560 },
+  ];
+  const n = (x1: number, y1: number, x2: number, y2: number) => ({ x1, y1, x2, y2 });
+  const numbers = [
+    n(171, 407, 277, 524), n(1376, 358, 1445, 421), n(1256, 397, 1306, 457), n(991, 379, 1018, 484),
+    n(554, 499, 604, 577), n(1393, 455, 1451, 531), n(220, 563, 301, 659), n(801, 399, 848, 466),
+    n(1109, 382, 1154, 500), n(492, 363, 576, 463), n(762, 386, 815, 492), n(925, 394, 977, 468),
+    n(1141, 397, 1205, 465),
+  ];
+  const equals = [n(1335, 423, 1367, 433), n(679, 464, 724, 483)];
+  const [a, b, c] = refineSteps(steps, numbers, equals);
+  assert.deepEqual(a.box, { x1: 171, y1: 363, x2: 604, y2: 659 });
+  assert.deepEqual(b.box, { x1: 762, y1: 379, x2: 1306, y2: 500 }); // now includes "+3"
+  assert.deepEqual(c.box, { x1: 1376, y1: 358, x2: 1451, y2: 531 }); // just "2/5"
+});

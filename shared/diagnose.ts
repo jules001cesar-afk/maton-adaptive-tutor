@@ -26,7 +26,8 @@ export async function diagnoseWork(
   const res = await chatJson<Diagnosis>({
     apiKey: opts.apiKey,
     model,
-    reasoningEffort: opts.reasoningEffort,
+    // Medium: cleaner Kreyòl (accents, varied openings) than low, ~11 s per answer.
+    reasoningEffort: opts.reasoningEffort ?? "medium",
     schemaName: "NotebookDiagnosis",
     schema: DIAGNOSIS_SCHEMA,
     messages: [
