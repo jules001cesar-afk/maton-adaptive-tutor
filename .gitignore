@@ -1,0 +1,15 @@
+# Secrets: never commit
+.dev.vars
+.env
+.env.*
+!.dev.vars.example
+
+# Student photos stay local
+test-photos/
+test-results/
+
+# Build output and dependencies
+node_modules/
+dist/
+.wrangler/
+.DS_Store
