@@ -66,7 +66,12 @@ export function PracticeStep({ analysis }: { analysis: Analysis }) {
 
       <form onSubmit={submit}>
         <p className="problem">
-          <MathText text={problem.problem} /> <span className="eq">= ?</span>
+          <MathText text={problem.problem} />{" "}
+          {problem.problem.includes("=") ? (
+            <span className="eq ask">Jwenn x</span>
+          ) : (
+            <span className="eq">= ?</span>
+          )}
         </p>
         <div className="answer-row">
           <input

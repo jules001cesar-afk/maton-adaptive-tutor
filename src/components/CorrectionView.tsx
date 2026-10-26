@@ -33,11 +33,7 @@ export function CorrectionView({ photoUrl, width, height, analysis }: { photoUrl
               return (
                 <g key={i} className={`mark ${s.status}`} style={{ animationDelay: `${i * 0.35}s` }}>
                   <ellipse cx={cx} cy={cy} rx={rx} ry={ry} pathLength={1} />
-                  {i === firstWrong && (
-                    <text x={cx} y={y2 + PAD + 52} textAnchor="middle">
-                      Ann gade etap sa a
-                    </text>
-                  )}
+                  {i === firstWrong && <Label box={s.box} width={width} height={height} />}
                 </g>
               );
             })}
@@ -57,5 +53,26 @@ export function CorrectionView({ photoUrl, width, height, analysis }: { photoUrl
         Mak yo: {analysis.marksFrom === "muse-spark+sam-3.1" ? "Muse Spark + SAM 3.1" : "Muse Spark"}. Chak kalkil verifye pa kòd.
       </p>
     </section>
+  );
+}
+
+const LABEL = "Ann gade etap sa a";
+const LABEL_WIDTH = 440; // about 18 characters at 44px
+
+/** Beside the mark when there is room (so it never covers a step written below), else under it. */
+function Label({ box, width, height }: { box: Analysis["steps"][number]["box"]; width: number; height: number }) {
+  const right = box.x2 + PAD + 24;
+  if (right + LABEL_WIDTH <= width) {
+    return (
+      <text x={right} y={(box.y1 + box.y2) / 2 + 16} textAnchor="start">
+        {LABEL}
+      </text>
+    );
+  }
+  const below = box.y2 + PAD + 52;
+  return (
+    <text x={(box.x1 + box.x2) / 2} y={below <= height - 8 ? below : box.y1 - PAD - 16} textAnchor="middle">
+      {LABEL}
+    </text>
   );
 }
