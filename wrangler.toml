@@ -1,4 +1,4 @@
-# Local development only for now (npx wrangler pages dev). Nothing is deployed.
+# Cloudflare Pages: https://maton-adaptive-tutor.pages.dev (MODEL_API_KEY is an encrypted Pages secret).
 name = "maton-adaptive-tutor"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
