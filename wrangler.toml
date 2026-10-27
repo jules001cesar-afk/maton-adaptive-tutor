@@ -2,3 +2,8 @@
 name = "maton-adaptive-tutor"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-10-01"
+
+# Practice sessions for the WhatsApp channel (hashed phone number -> current exercise, 1 hour TTL).
+[[kv_namespaces]]
+binding = "MATON_KV"
+id = "f7e0b0f86ba14ca1ad41ae593018c8d5"
