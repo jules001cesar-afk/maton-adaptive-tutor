@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MATON Kaye Privacy</title>
+    <link rel="icon" href="/maton-icon.png" />
+    <style>
+      :root {
+        --blue: #1346b8;
+        --ink: #16213a;
+        --muted: #5b6478;
+        --bg: #f5f7fb;
+        --paper: #ffffff;
+        --line: #e3e7ef;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --blue: #7fa4ff;
+          --ink: #e8ecf5;
+          --muted: #a6aec0;
+          --bg: #10141d;
+          --paper: #181d29;
+          --line: #2a3142;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.6;
+      }
+      main {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+      article {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 20px;
+        margin-top: 16px;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin: 8px 0 0;
+      }
+      h2 {
+        font-size: 1.15rem;
+        color: var(--blue);
+        margin: 24px 0 4px;
+      }
+      p,
+      li {
+        color: var(--ink);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      img {
+        height: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/maton-logo.png" alt="MATON" />
+      <h1>MATON Kaye privacy policy</h1>
+      <p class="muted">Last updated: October 26, 2026</p>
+
+      <article lang="en">
+        <p>
+          MATON Kaye is a free math tutor for students in Haiti, built for the Meta Global AI Developer Hackathon 2026. A
+          student sends a photo of handwritten math homework, through the web app at maton-adaptive-tutor.pages.dev or
+          through WhatsApp, and receives an explanation in Haitian Creole and practice exercises.
+        </p>
+
+        <h2>What we receive</h2>
+        <ul>
+          <li>The notebook photo you send.</li>
+          <li>The answers you type to practice exercises.</li>
+          <li>On WhatsApp: your phone number and message IDs, as delivered by WhatsApp.</li>
+        </ul>
+
+        <h2>How we use it</h2>
+        <ul>
+          <li>
+            The photo is sent to Meta's Model API (Muse Spark and SAM 3.1) to read the work and write the explanation.
+            Meta processes it under its own terms.
+          </li>
+          <li>Our code checks the math and creates practice exercises.</li>
+          <li>On WhatsApp, we use your phone number only to reply to you.</li>
+        </ul>
+
+        <h2>What we keep</h2>
+        <ul>
+          <li>We do not store photos. They are discarded once the answer is sent.</li>
+          <li>
+            On WhatsApp, we keep your current practice exercise for 1 hour, under a scrambled (hashed) form of your phone
+            number, never the number itself. Message IDs are kept the same way for 24 hours so the same message is not
+            answered twice. Both are deleted automatically.
+          </li>
+          <li>We do not write phone numbers or message text to our logs.</li>
+          <li>We do not sell data, show ads, or use the data for anything else.</li>
+        </ul>
+
+        <h2>Who hosts it</h2>
+        <p>The app runs on Cloudflare Pages. WhatsApp messages travel through Meta's WhatsApp Business Platform.</p>
+
+        <h2>Students</h2>
+        <p>
+          MATON Kaye is meant for students aged 10 to 14 with the agreement of a parent, guardian or teacher. Please do not
+          put names, faces or other personal details in the photos.
+        </p>
+
+        <h2>Your choices</h2>
+        <p>
+          You can stop at any time by no longer sending messages. Because we keep nothing beyond the limits above, there is
+          normally nothing to delete. To ask a question or request deletion, write to jules001cesar@gmail.com.
+        </p>
+      </article>
+
+      <article lang="ht">
+        <h2>An kreyòl</h2>
+        <p>
+          MATON Kaye se yon tutè matematik gratis pou elèv ann Ayiti. Ou voye foto kaye ou, sou sit la oswa sou WhatsApp,
+          epi ou resevwa yon eksplikasyon an kreyòl ak egzèsis pou pratike.
+        </p>
+        <ul>
+          <li>Foto a ale kay Meta (Muse Spark ak SAM 3.1) pou li kaye a. Nou pa kenbe foto yo.</li>
+          <li>
+            Sou WhatsApp, nou sèvi ak nimewo w sèlman pou n reponn ou. Nou kenbe egzèsis ou ap fè a pandan 1 èdtan, anba
+            yon fòm nimewo a ki melanje (hash), pa nimewo a menm. Apre sa li efase poukont li.
+          </li>
+          <li>Nou pa vann done, nou pa mete piblisite.</li>
+          <li>Tanpri pa mete non, figi oswa lòt enfòmasyon pèsonèl nan foto yo.</li>
+          <li>Pou nenpòt kesyon: jules001cesar@gmail.com</li>
+        </ul>
+      </article>
+    </main>
+  </body>
+</html>
