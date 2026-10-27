@@ -181,3 +181,26 @@ test("on one line, the answer mark holds only what comes after the earlier step"
     assert.ok(rest.box.y1 > 850, "Res 5 stays on its own line");
   }
 });
+
+test("without SAM numbers, the steps are fitted to the block of writing", async () => {
+  const { refineSteps } = await import("../shared/refine.ts");
+  const n = (x1: number, x2: number, y1: number, y2: number) => ({ x1, y1, x2, y2 });
+  // Real boxes from the phone photo of "x + 5 = 12 / x = 12 + 5 / x = 17": SAM found no
+  // numbers but found the whole expression at y 569-881.
+  const steps = [n(156, 696, 544, 672), n(144, 624, 688, 808), n(156, 432, 824, 928)];
+  const marks = refineSteps(steps, [], [], n(149, 721, 569, 881));
+  const mid = (b: { y1: number; y2: number }) => (b.y1 + b.y2) / 2;
+  // Text lines on the photo are centred near y 615, 730 and 845.
+  [615, 730, 845].forEach((y, i) => assert.ok(Math.abs(mid(marks[i].box) - y) < 30, `step ${i + 1} at ${mid(marks[i].box)}`));
+});
+
+test("the answer mark counts the new digits when the model's edge stops early", async () => {
+  const { refineSteps } = await import("../shared/refine.ts");
+  const n = (x1: number, x2: number, y1: number, y2: number) => ({ x1, y1, x2, y2 });
+  // Real run on "52-17=45": the model's first box stops at x 534, before the "17".
+  const steps = [n(246, 534, 616, 776), n(246, 876, 616, 776)];
+  const numbers = [n(247, 306, 625, 720), n(341, 428, 610, 721), n(532, 591, 607, 720), n(613, 687, 615, 694), n(790, 850, 622, 690), n(851, 923, 602, 687)];
+  const [problem, answer] = refineSteps(steps, numbers, [], null, ["52-17", "52-17=45"]);
+  assert.deepEqual([problem.box.x1, problem.box.x2], [247, 687]);
+  assert.deepEqual([answer.box.x1, answer.box.x2], [790, 923]);
+});

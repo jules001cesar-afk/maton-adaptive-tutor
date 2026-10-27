@@ -54,35 +54,75 @@ const union = (boxes: PixelBox[]): PixelBox => ({
 /**
  * On one line the model often repeats earlier steps inside a later one: "47 + 38" and
  * then "47 + 38 = 75" for the whole line. What the later step adds is only what lies to
- * the right of the earlier one ("= 75"), so trim it to that part. The model's edge can
- * cut through a digit, so the border moves to the gap between SAM numbers just after
- * it, which is where the "=" was written.
+ * the right of the earlier one ("= 75"), so trim it to that part. The model's edge is
+ * not reliable (it can stop well before the "="), so when the step texts are known the
+ * border is placed before the last digits SAM found on the line, as many as the new
+ * part has ("75": two). Otherwise it is the first gap between SAM numbers after the
+ * model's edge.
  */
-export function ownParts(steps: PixelBox[], numbers: PixelBox[] = []): PixelBox[] {
+export function ownParts(steps: PixelBox[], numbers: PixelBox[] = [], texts: string[] = []): PixelBox[] {
   const xs = [...numbers].sort((a, b) => a.x1 - b.x1);
-  const border = (e: PixelBox, line: PixelBox) => {
-    // The model's edge tends to stop just short of the earlier step's last digit, so the
-    // border is the first real gap from there on (the "=" between the steps).
+  const onLine = (line: PixelBox) => xs.filter((n) => centerY(n) >= line.y1 && centerY(n) <= line.y2 && centerX(n) <= line.x2 + 80);
+  const byDigits = (line: PixelBox, digits: number): number | null => {
+    const boxes = onLine(line);
+    const tall = boxes.filter((b) => b.y2 - b.y1 >= 0.5 * median(boxes.map((n) => n.y2 - n.y1)));
+    const width = median(tall.map((b) => b.x2 - b.x1));
+    if (!digits || !tall.length || !width) return null;
+    let count = 0;
+    for (let k = tall.length - 1; k > 0; k--) {
+      count += Math.max(1, Math.round((tall[k].x2 - tall[k].x1) / width));
+      if (count >= digits) return (tall[k].x1 + tall[k - 1].x2) / 2;
+    }
+    return null;
+  };
+  const byGap = (e: PixelBox, line: PixelBox) => {
     const from = e.x2 - 20;
     const reach = e.x2 + 0.4 * (e.x2 - e.x1);
-    const onLine = xs.filter((n) => centerY(n) >= line.y1 && centerY(n) <= line.y2);
-    for (let k = 1; k < onLine.length; k++) {
-      const gap = onLine[k].x1 - onLine[k - 1].x2;
-      const at = (onLine[k].x1 + onLine[k - 1].x2) / 2;
+    const row = onLine(line);
+    for (let k = 1; k < row.length; k++) {
+      const gap = row[k].x1 - row[k - 1].x2;
+      const at = (row[k].x1 + row[k - 1].x2) / 2;
       if (gap >= 25 && at >= from && at <= reach) return at;
     }
     return e.x2;
   };
+  const squash = (t: string | undefined) => (t ?? "").replace(/\s+/g, "");
   return steps.map((s, i) => {
     let x1 = s.x1;
     for (let j = 0; j < i; j++) {
       const e = steps[j];
       const sameLine = e.y1 < s.y2 && s.y1 < e.y2;
       const covered = Math.max(0, Math.min(e.x2, s.x2) - Math.max(e.x1, s.x1)) >= 0.7 * (e.x2 - e.x1);
-      if (sameLine && covered && e.x2 < s.x2) x1 = Math.max(x1, border(e, s));
+      if (!sameLine || !covered || e.x2 >= s.x2) continue;
+      const later = squash(texts[i]);
+      const earlier = squash(texts[j]);
+      const added = earlier && later.startsWith(earlier) ? later.slice(earlier.length) : "";
+      const at = byDigits(s, (added.match(/[0-9]/g) ?? []).length);
+      x1 = Math.max(x1, at !== null && at > e.x1 ? at : byGap(e, s));
     }
     return { ...s, x1 };
   });
+}
+
+const median = (v: number[]) => {
+  if (!v.length) return 0;
+  const sorted = [...v].sort((a, b) => a - b);
+  return sorted[Math.floor(sorted.length / 2)];
+};
+
+/**
+ * When SAM finds too few numbers to align on (dark or tinted photos), it still finds the
+ * whole block of writing ("mathematical expression"). Stretch and shift the model's
+ * boxes vertically so together they span that block, which puts each step back on its
+ * own line.
+ */
+export function fitToBlock(steps: PixelBox[], block: PixelBox | null): PixelBox[] {
+  if (!block || !steps.length) return steps;
+  const top = Math.min(...steps.map((s) => s.y1));
+  const bottom = Math.max(...steps.map((s) => s.y2));
+  const k = (block.y2 - block.y1) / Math.max(bottom - top, 1);
+  if (k < 0.5 || k > 1.6) return steps; // too different to be the same writing
+  return steps.map((s) => ({ ...s, y1: block.y1 + (s.y1 - top) * k, y2: block.y1 + (s.y2 - top) * k }));
 }
 
 /**
@@ -126,13 +166,20 @@ export function alignToNumbers(steps: PixelBox[], numbers: PixelBox[]): PixelBox
  * step box that holds it (the nearest centre when boxes overlap), so marks never
  * share a number.
  */
-export function refineSteps(steps: PixelBox[], numbers: PixelBox[], equals: PixelBox[]): { box: PixelBox; refined: boolean }[] {
-  const shifted = alignToNumbers(steps, numbers);
-  const own = ownParts(shifted, numbers);
+export function refineSteps(
+  steps: PixelBox[],
+  numbers: PixelBox[],
+  equals: PixelBox[],
+  block: PixelBox | null = null,
+  texts: string[] = [],
+): { box: PixelBox; refined: boolean }[] {
+  const shifted = numbers.length >= steps.length ? alignToNumbers(steps, numbers) : fitToBlock(steps, block);
+  const own = ownParts(shifted, numbers, texts);
   // An earlier step ends where a later one on its line begins.
   const aligned = shifted.map((b, i) => {
-    const next = own.find((o, k) => k > i && o.x1 > b.x1 && o.x1 < b.x2 && o.y1 < b.y2 && b.y1 < o.y2);
-    return { ...own[i], x2: next ? Math.min(own[i].x2, next.x1) : own[i].x2 };
+    // (a later step on the same line that was trimmed to its own part)
+    const next = own.find((o, k) => k > i && o.x1 !== shifted[k].x1 && o.x1 > b.x1 && o.y1 < b.y2 && b.y1 < o.y2);
+    return { ...own[i], x2: next ? next.x1 : own[i].x2 };
   });
   const holds = (b: PixelBox, x: number, y: number, margin: number) => {
     // Never less than a few pixels: the model's edge often stops just short of the last digit.

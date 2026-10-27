@@ -28,21 +28,23 @@ const base64 = (await readFile(photo)).toString("base64");
 const imageDataUrl = `data:${mime};base64,${base64}`;
 const sam = (prompt: string) => samBoxes({ apiKey, imageDataUrl, prompt }).then((r) => r.boxes);
 
-const [run, printed, handwritten, equals] = await Promise.all([
+const [run, printed, handwritten, equals, blocks] = await Promise.all([
   diagnoseWork({ photo: { mime, base64 } }, { apiKey }),
   sam("number"),
   sam("handwritten number"),
   sam("equals sign"),
+  sam("mathematical expression"),
 ]);
+const block = blocks[0] ?? null;
 const numbers = mergeBoxes(printed, handwritten);
 const steps = run.diagnosis.steps.map((s, i) => ({
   text: s.text,
   correct: run.verification?.steps[i]?.matches ?? s.is_correct,
   coarse: gridToPixels(s.box, width, height),
 }));
-const marks = refineSteps(steps.map((s) => s.coarse), numbers, equals);
+const marks = refineSteps(steps.map((s) => s.coarse), numbers, equals, block, steps.map((s) => s.text));
 
-const result = { photo: basename(photo), width, height, transcription: run.diagnosis.transcription, steps, numbers, equals, marks };
+const result = { photo: basename(photo), width, height, transcription: run.diagnosis.transcription, steps, numbers, equals, block, marks };
 await mkdir("test-results", { recursive: true });
 const out = `test-results/marks-${basename(photo, extname(photo))}.json`;
 await writeFile(out, JSON.stringify(result, null, 1));
