@@ -158,3 +158,26 @@ test("merges the numbers from two SAM prompts without duplicates", async () => {
   const merged = mergeBoxes([n(0, 50, 0, 50), n(100, 150, 0, 50)], [n(2, 52, 1, 49), n(200, 250, 0, 50)]);
   assert.equal(merged.length, 3);
 });
+
+test("on one line, the answer mark holds only what comes after the earlier step", async () => {
+  const { refineSteps } = await import("../shared/refine.ts");
+  const n = (x1: number, x2: number, y1: number, y2: number) => ({ x1, y1, x2, y2 });
+  // Real boxes from phone photos. The model gives "52 - 17" and then the whole line
+  // "52-17=45", and its first box stops in the middle of the "7".
+  {
+    const steps = [n(240, 648, 600, 776), n(240, 876, 600, 776)];
+    const numbers = [n(613, 687, 615, 694), n(851, 923, 602, 687), n(341, 428, 610, 721), n(790, 850, 622, 690), n(247, 306, 625, 720), n(532, 591, 607, 720)];
+    const [problem, answer] = refineSteps(steps, numbers, []);
+    assert.deepEqual([problem.box.x1, problem.box.x2], [247, 687]); // all of 52 - 17
+    assert.deepEqual([answer.box.x1, answer.box.x2], [790, 923]); // just 45
+  }
+  // "29 ÷ 4 = 6 / Res 5": the gap after "÷" is wider than the one before "=".
+  {
+    const steps = [n(246, 600, 688, 840), n(246, 822, 688, 848), n(294, 654, 880, 1000)];
+    const numbers = [n(434, 495, 864, 956), n(284, 374, 871, 948), n(361, 408, 667, 762), n(253, 343, 656, 768), n(775, 834, 683, 777), n(364, 434, 882, 941), n(580, 671, 871, 962), n(570, 645, 697, 806)];
+    const [problem, answer, rest] = refineSteps(steps, numbers, []);
+    assert.equal(problem.box.x2, 645); // keeps the 4
+    assert.deepEqual([answer.box.x1, answer.box.x2], [775, 834]); // just 6
+    assert.ok(rest.box.y1 > 850, "Res 5 stays on its own line");
+  }
+});

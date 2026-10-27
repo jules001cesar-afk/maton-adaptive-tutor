@@ -52,6 +52,40 @@ const union = (boxes: PixelBox[]): PixelBox => ({
 });
 
 /**
+ * On one line the model often repeats earlier steps inside a later one: "47 + 38" and
+ * then "47 + 38 = 75" for the whole line. What the later step adds is only what lies to
+ * the right of the earlier one ("= 75"), so trim it to that part. The model's edge can
+ * cut through a digit, so the border moves to the gap between SAM numbers just after
+ * it, which is where the "=" was written.
+ */
+export function ownParts(steps: PixelBox[], numbers: PixelBox[] = []): PixelBox[] {
+  const xs = [...numbers].sort((a, b) => a.x1 - b.x1);
+  const border = (e: PixelBox, line: PixelBox) => {
+    // The model's edge tends to stop just short of the earlier step's last digit, so the
+    // border is the first real gap from there on (the "=" between the steps).
+    const from = e.x2 - 20;
+    const reach = e.x2 + 0.4 * (e.x2 - e.x1);
+    const onLine = xs.filter((n) => centerY(n) >= line.y1 && centerY(n) <= line.y2);
+    for (let k = 1; k < onLine.length; k++) {
+      const gap = onLine[k].x1 - onLine[k - 1].x2;
+      const at = (onLine[k].x1 + onLine[k - 1].x2) / 2;
+      if (gap >= 25 && at >= from && at <= reach) return at;
+    }
+    return e.x2;
+  };
+  return steps.map((s, i) => {
+    let x1 = s.x1;
+    for (let j = 0; j < i; j++) {
+      const e = steps[j];
+      const sameLine = e.y1 < s.y2 && s.y1 < e.y2;
+      const covered = Math.max(0, Math.min(e.x2, s.x2) - Math.max(e.x1, s.x1)) >= 0.7 * (e.x2 - e.x1);
+      if (sameLine && covered && e.x2 < s.x2) x1 = Math.max(x1, border(e, s));
+    }
+    return { ...s, x1 };
+  });
+}
+
+/**
  * Muse Spark's boxes can sit a little off on the page, mostly vertically (on portrait
  * photos they drift down, by a whole line on tightly written work). Find the vertical
  * stretch and shift that make the model's boxes cover the most SAM numbers, with every
@@ -93,17 +127,25 @@ export function alignToNumbers(steps: PixelBox[], numbers: PixelBox[]): PixelBox
  * share a number.
  */
 export function refineSteps(steps: PixelBox[], numbers: PixelBox[], equals: PixelBox[]): { box: PixelBox; refined: boolean }[] {
-  const aligned = alignToNumbers(steps, numbers);
+  const shifted = alignToNumbers(steps, numbers);
+  const own = ownParts(shifted, numbers);
+  // An earlier step ends where a later one on its line begins.
+  const aligned = shifted.map((b, i) => {
+    const next = own.find((o, k) => k > i && o.x1 > b.x1 && o.x1 < b.x2 && o.y1 < b.y2 && b.y1 < o.y2);
+    return { ...own[i], x2: next ? Math.min(own[i].x2, next.x1) : own[i].x2 };
+  });
+  const holds = (b: PixelBox, x: number, y: number, margin: number) => {
+    // Never less than a few pixels: the model's edge often stops just short of the last digit.
+    const mx = margin ? Math.max((b.x2 - b.x1) * margin, 30) : 0;
+    const my = margin ? Math.max((b.y2 - b.y1) * margin, 15) : 0;
+    return x >= b.x1 - mx && x <= b.x2 + mx && y >= b.y1 - my && y <= b.y2 + my;
+  };
   const owner = numbers.map((n) => {
     const cx = centerX(n);
     const cy = centerY(n);
-    const holders = aligned
-      .map((b, i) => ({ i, b }))
-      .filter(({ b }) => {
-        const mx = (b.x2 - b.x1) * 0.08;
-        const my = (b.y2 - b.y1) * 0.08;
-        return cx >= b.x1 - mx && cx <= b.x2 + mx && cy >= b.y1 - my && cy <= b.y2 + my;
-      });
+    // A box that holds the number outright wins over one that only reaches it with the margin.
+    let holders = aligned.map((b, i) => ({ i, b })).filter(({ b }) => holds(b, cx, cy, 0));
+    if (!holders.length) holders = aligned.map((b, i) => ({ i, b })).filter(({ b }) => holds(b, cx, cy, 0.08));
     if (!holders.length) return -1;
     holders.sort((a, b) => Math.hypot(centerX(a.b) - cx, centerY(a.b) - cy) - Math.hypot(centerX(b.b) - cx, centerY(b.b) - cy));
     return holders[0].i;
