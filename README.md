@@ -48,7 +48,26 @@ photo ──► Muse Spark ──► steps + positions + misconception + Kreyòl
 
 If the Meta API cannot be reached, the app can show a result recorded earlier from a real
 Muse Spark + SAM 3.1 run on the demo photo. It is always labelled on screen as recorded,
-never presented as a live answer.
+never presented as a live answer. (WhatsApp never uses it: it says plainly that Meta could not be reached.)
+
+## On WhatsApp
+
+The same tutor also works in WhatsApp, the app many students and families already use
+every day (`shared/whatsapp.ts`, webhook at `/api/whatsapp`):
+
+1. The student sends a photo of the notebook page.
+2. MATON Kaye replies in Kreyòl: what it read, the step to look at, what the student did,
+   the idea to remember, an example and one guiding question. No answer is given.
+3. It sends a practice problem made by code. The student types an answer; code checks it.
+   A wrong answer gets a hint, a right one gets the next problem, and three in a row ends
+   with "Bravo!".
+
+Every request must carry Meta's `X-Hub-Signature-256` signature. The current exercise is kept
+for 1 hour in Cloudflare KV under a hashed phone number, never the number itself, and phone
+numbers and message text are never logged. Privacy policy: `/privacy`.
+
+During the hackathon the WhatsApp number is Meta's test number, which can only message
+numbers added to the app (5 at most). The web app is open to everyone.
 
 ## Privacy and safety
 
@@ -85,7 +104,7 @@ node --env-file=.dev.vars scripts/debug-marks.ts <photo> <w> <h>   # where every
 | Path | What it is |
 |---|---|
 | `src/` | React web app: photo, analysis, corrected page, explanation, practice |
-| `functions/api/` | Cloudflare Pages Functions: `/api/analyze` and `/api/check` |
+| `functions/api/` | Cloudflare Pages Functions: `/api/analyze`, `/api/check` and `/api/whatsapp` |
 | `shared/` | Code shared by the server and the scripts: Meta clients, prompt, math, marks |
 | `tests/` | Unit tests: math, marks, `/api/check` safety, Meta API errors, bad photos, fallback |
 | `scripts/` | Command-line tools for diagnosis, evaluation and mark debugging |
@@ -98,7 +117,7 @@ Oct 26, 2026; the full history is in `git log`. This includes:
 - the photo → Muse Spark + SAM 3.1 pipeline and the Kreyòl tutor prompt
 - the code that verifies each step and places the red and green marks
 - the misconception list, the practice generator and the answer checking
-- the web app and the two API endpoints
+- the web app, the API endpoints and the WhatsApp channel
 - the tests and evaluation scripts
 
 Reused from before the hackathon: only the MATON name, logo and colours. MATON is an existing
