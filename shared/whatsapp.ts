@@ -14,7 +14,7 @@ import { OPERATIONS, type Operation } from "./misconceptions.ts";
 import { makePractice, type Level } from "./practice.ts";
 import { checkStep, solveProblem } from "./verify.ts";
 
-export const GRAPH_URL = "https://graph.facebook.com/v23.0";
+export const GRAPH_URL = "https://graph.facebook.com/v25.0";
 const MAX_BODY = 64 * 1024;
 const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 const MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
