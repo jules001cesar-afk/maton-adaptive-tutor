@@ -240,5 +240,9 @@ async function sendText(f: typeof fetch, token: string, phoneId: string, to: str
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body: body.slice(0, 4000) } }),
   });
-  if (!res.ok) console.error(`whatsapp: send failed (status ${res.status})`);
+  if (!res.ok) {
+    // Only Meta's error codes are logged; its message text can contain the phone number.
+    const err = ((await res.json().catch(() => ({}))) as { error?: { code?: number; error_subcode?: number; type?: string } }).error;
+    console.error(`whatsapp: send failed (status ${res.status}, code ${err?.code}, subcode ${err?.error_subcode}, ${err?.type})`);
+  }
 }
