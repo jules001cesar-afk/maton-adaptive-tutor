@@ -6,8 +6,8 @@
 // - phone numbers are never logged and never stored in clear: the session key is an
 //   HMAC of the number;
 // - the practice answer stays on the server (in the session), like /api/check;
-// - the webhook replies 200 at once (so Meta does not resend) and does the work in
-//   waitUntil, which Cloudflare lets run about 30 s after the response.
+// - the reply is built before the webhook answers 200 (see handleWhatsApp), because
+//   Cloudflare cancels waitUntil work about 30 s after the response.
 import { diagnoseWork, type DiagnosisRun } from "./diagnose.ts";
 import { MetaApiError } from "./meta-client.ts";
 import { OPERATIONS, type Operation } from "./misconceptions.ts";
@@ -146,7 +146,14 @@ export async function handleWhatsApp(request: Request, env: WhatsAppEnv, deps: W
     return new Response("bad json", { status: 400 });
   }
   const messages = incomingMessages(payload);
-  if (messages.length) deps.waitUntil(Promise.all(messages.map((m) => answer(m, env as Required<WhatsAppEnv>, deps))));
+  if (messages.length) {
+    // A diagnosis takes 20-30 s, longer than waitUntil alone allows after the response.
+    // So the work runs while Meta's request is still open, and waitUntil only keeps it
+    // alive if Meta hangs up first; a resent message is caught by the "seen" check.
+    const work = Promise.all(messages.map((m) => answer(m, env as Required<WhatsAppEnv>, deps)));
+    deps.waitUntil(work);
+    await work;
+  }
   return new Response("ok", { status: 200 });
 }
 
