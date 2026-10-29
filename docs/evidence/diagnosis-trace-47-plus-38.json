@@ -1,0 +1,99 @@
+{
+  "diagnosis": {
+    "concept_ht": "Chak kolòn kenbe yon sèl chif. Lè total inite yo fè dis oswa plis, nou pote yon dizèn nan kolòn dizèn yo.",
+    "encouragement_ht": "Chif 5 ou mete nan kolòn inite yo bon.",
+    "example_ht": "10 grenn mango fè yon pakèt dis. Pakèt la ale nan kolòn dizèn yo, pa nan kolòn inite yo.",
+    "first_wrong_step_index": 1,
+    "guiding_question_ht": "Konbyen dizèn ou dwe pote nan kolòn dizèn yo apre ou fin ajoute inite yo?",
+    "misconception_id": "add_no_carry",
+    "operation": "addition",
+    "practice_hint_ht": "Anvan ou ekri rezilta kolòn dizèn yo, sonje ajoute dizèn ou te pote a.",
+    "problem": "47 + 38",
+    "steps": [
+      {
+        "box": {
+          "x_max": 495,
+          "x_min": 185,
+          "y_max": 415,
+          "y_min": 340
+        },
+        "is_correct": true,
+        "text": "47 + 38"
+      },
+      {
+        "box": {
+          "x_max": 695,
+          "x_min": 185,
+          "y_max": 415,
+          "y_min": 340
+        },
+        "is_correct": false,
+        "text": "47 + 38 = 75"
+      }
+    ],
+    "student_action_ht": "Ou ajoute 47 ak 38, ou jwenn 5 nan inite yo, men ou bliye pote dizèn ki soti nan 7 plis 8 lan nan kolòn dizèn yo.",
+    "student_final_answer": "75",
+    "teaching_recommendation": "Model regrouping ten ones into one ten with base-ten blocks, then have the student rework this sum explaining the carried ten.",
+    "transcription": "47 + 38 = 75"
+  },
+  "verification": {
+    "mode": "arithmetic",
+    "correct": {
+      "kind": "value",
+      "value": {
+        "n": 85,
+        "d": 1
+      }
+    },
+    "correctText": "85",
+    "steps": [
+      {
+        "text": "47 + 38",
+        "shown": "85",
+        "matches": true
+      },
+      {
+        "text": "47 + 38 = 75",
+        "shown": "75",
+        "matches": false
+      }
+    ],
+    "firstWrongStep": 1,
+    "finalCorrect": false
+  },
+  "stepAgreement": true,
+  "practice": {
+    "problem": "66 + 15",
+    "answer": {
+      "kind": "value",
+      "value": {
+        "n": 81,
+        "d": 1
+      }
+    },
+    "answerText": "81",
+    "misconceptionId": "add_no_carry"
+  },
+  "textChecks": {
+    "accentFixes": 0,
+    "foreignWords": [],
+    "guidingQuestionMarks": 1,
+    "questionsElsewhere": [],
+    "answerLeaked": false
+  },
+  "meta": {
+    "model": "muse-spark-1.3",
+    "seconds": 17.73,
+    "usage": {
+      "completion_tokens": 4160,
+      "prompt_tokens": 6056,
+      "total_tokens": 10216,
+      "completion_tokens_details": {
+        "reasoning_tokens": 3754
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  }
+}

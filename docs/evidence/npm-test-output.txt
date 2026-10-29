@@ -1,0 +1,51 @@
+# npm test output, captured 2026-10-28 on macOS with Node v22.23.2
+# Command: node --test --test-reporter=spec "tests/*.test.ts"   (same files as `npm test`, readable reporter)
+# Commit under test: 1bfb8ca plus uncommitted documentation edits only (README.md, .dev.vars.example).
+#
+# These are automated tests. They make NO network calls: Meta's Model API, the WhatsApp Graph API
+# and the photo download are replaced by fakes (tests/whatsapp.test.ts: harness(), memoryKv()).
+# The two "Meta API error" lines below are expected: they come from tests that simulate a
+# Meta failure (status 401 and 503) on purpose.
+#
+Meta API error (status 401)
+✔ /api/analyze returns the analysis without the practice answer, masks or key (19.190042ms)
+✔ /api/analyze rejects invalid photos before calling Meta (21.132625ms)
+✔ /api/analyze without a configured key fails safely (0.27275ms)
+✔ /api/analyze turns Meta errors into a plain message without details (0.469667ms)
+✔ /api/check never reveals the answer (2.180625ms)
+✔ /api/check accepts equivalent answers and checks equations and remainders (0.590625ms)
+✔ /api/check rejects anything that is not a practice problem (0.479291ms)
+✔ the fallback is a labeled recording and carries no answers (0.102792ms)
+✔ evaluates what students write (1.905166ms)
+✔ solves linear equations (0.89175ms)
+✔ finds the first wrong step in every evaluation case (1.94825ms)
+✔ division with a remainder (0.220125ms)
+✔ practice problems are new, solvable and checked by code (16.140167ms)
+✔ restores only unambiguous missing accents (0.258083ms)
+✔ snaps chained steps to the borders SAM finds between them (6.245458ms)
+✔ ignores '=' borders that do not sit between the steps (2.059375ms)
+✔ puts each step back on its own line when the model's boxes drift down (0.9255ms)
+✔ never gives the same number to two overlapping steps (1.109583ms)
+✔ merges the numbers from two SAM prompts without duplicates (0.653541ms)
+✔ on one line, the answer mark holds only what comes after the earlier step (4.290875ms)
+✔ without SAM numbers, the steps are fitted to the block of writing (0.207458ms)
+✔ the answer mark counts the new digits when the model's edge stops early (0.791709ms)
+✔ webhook verification answers Meta's challenge only with the right token (19.2125ms)
+✔ a POST without Meta's signature, or signed with another secret, is refused (5.705166ms)
+✔ a photo gets the Kreyòl explanation and a practice problem, without any answer (3.674ms)
+✔ the phone number is never stored in clear and never logged (2.001666ms)
+✔ practice answers are checked by code, and 3 in a row finishes the loop (2.816625ms)
+✔ text with no practice in progress gets the welcome message (0.464833ms)
+✔ a photo type the app cannot read gets a clear message and no Meta call (0.384334ms)
+whatsapp: Meta model API error (status 503)
+✔ a Meta API error becomes a plain Kreyòl message (0.585542ms)
+✔ the same message delivered twice is answered once (0.662ms)
+✔ without its secrets the webhook refuses to work (0.317542ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 32
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 168.62725

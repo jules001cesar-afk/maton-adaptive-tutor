@@ -1,0 +1,20 @@
+# RENDERED LOCALLY, NOT SENT ON WHATSAPP.
+# Built by diagnosisMessage() in shared/whatsapp.ts from the real recorded Muse Spark run in
+# diagnosis-trace-47-plus-38.json, with the same practice session answer() creates.
+# Text between the asterisks shows in bold on WhatsApp.
+
+*MATON Kaye*
+Mwen li: 47 + 38 = 75
+
+Chif 5 ou mete nan kolòn inite yo bon.
+
+*Ann gade etap sa a:* 47 + 38 = 75
+*Sa ou te fè:* Ou ajoute 47 ak 38, ou jwenn 5 nan inite yo, men ou bliye pote dizèn ki soti nan 7 plis 8 lan nan kolòn dizèn yo.
+
+*Ide pou sonje:* Chak kolòn kenbe yon sèl chif. Lè total inite yo fè dis oswa plis, nou pote yon dizèn nan kolòn dizèn yo.
+*Egzanp:* 10 grenn mango fè yon pakèt dis. Pakèt la ale nan kolòn dizèn yo, pa nan kolòn inite yo.
+
+*Reflechi sou sa:* Konbyen dizèn ou dwe pote nan kolòn dizèn yo apre ou fin ajoute inite yo?
+
+*Pratike (1/3):* 66 + 15 = ?
+Ekri repons ou isit la.
