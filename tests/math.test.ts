@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { evaluate, solveLinear } from "../shared/parse.ts";
-import { checkPracticeAnswer, makePractice } from "../shared/practice.ts";
+import { checkPracticeAnswer, makePractice, sameProblem } from "../shared/practice.ts";
 import { rat, show } from "../shared/rational.ts";
 import { verifyWork } from "../shared/verify.ts";
 import { CASES } from "./cases.ts";
@@ -203,4 +203,52 @@ test("the answer mark counts the new digits when the model's edge stops early", 
   const [problem, answer] = refineSteps(steps, numbers, [], null, ["52-17", "52-17=45"]);
   assert.deepEqual([problem.box.x1, problem.box.x2], [247, 687]);
   assert.deepEqual([answer.box.x1, answer.box.x2], [790, 923]);
+});
+
+test("practice never repeats the student's multiplication, however it is written", () => {
+  for (const avoid of ["7 x 8", "7*8", "7 X 8", "7·8", "7 × 8", "8 x 7"]) {
+    for (let seed = 1; seed <= 2000; seed++) {
+      const p = makePractice({ misconceptionId: "mul_fact_error", operation: "multiplication", level: 1, seed, avoid })!;
+      assert.ok(p.problem !== "7 × 8" && p.problem !== "8 × 7", `${avoid} seed ${seed} gave ${p.problem}`);
+    }
+  }
+});
+
+test("sameProblem reads x as a variable unless it sits between two digits", () => {
+  assert.ok(sameProblem("2x + 7 = 15", "2x+7=15"));
+  assert.ok(!sameProblem("2x + 7 = 15", "2 × 7 = 15"));
+  assert.ok(sameProblem("12 x 3", "3 × 12"));
+  assert.ok(!sameProblem("7 × 8", "7 × 9"));
+  assert.ok(!sameProblem("7 - 8", "8 - 7"));
+  assert.ok(!sameProblem("2x + 7 = 15", "2 × 7 + 15"));
+  // Swapped factors count only for a lone product, the only kind the generator makes;
+  // inside a longer expression the sign is still read, but the order matters.
+  assert.ok(sameProblem("2 x 7 + 3", "2 × 7 + 3"));
+  assert.ok(!sameProblem("2 × 7 + 3", "7 × 2 + 3"));
+  // An equation the student wrote is still never given back as practice.
+  for (let seed = 1; seed <= 500; seed++) {
+    const p = makePractice({ misconceptionId: "eq_divide_wrong", operation: "equations", seed, avoid: "2x = 14" })!;
+    assert.notEqual(p.problem.replace(/\s+/g, ""), "2x=14");
+  }
+});
+
+test("with insufficient evidence, a fraction division gets division practice", () => {
+  for (let seed = 1; seed <= 200; seed++) {
+    const div = makePractice({ misconceptionId: "insufficient_evidence", operation: "fractions", seed, avoid: "1/2 ÷ 1/4" })!;
+    assert.match(div.problem, /÷/);
+    assert.equal(div.misconceptionId, "frac_div_not_inverted");
+    const colon = makePractice({ misconceptionId: "insufficient_evidence", operation: "fractions", seed, avoid: "1/2 : 1/4" })!;
+    assert.equal(colon.misconceptionId, "frac_div_not_inverted");
+    const add = makePractice({ misconceptionId: "insufficient_evidence", operation: "fractions", seed, avoid: "1/2 + 1/3" })!;
+    assert.match(add.problem, /\+/);
+    assert.equal(add.misconceptionId, "frac_add_across");
+    // A named misconception keeps its own problems.
+    const named = makePractice({ misconceptionId: "frac_add_across", operation: "fractions", seed, avoid: "1/2 ÷ 1/4" })!;
+    assert.equal(named.misconceptionId, "frac_add_across");
+    // Other operations keep their usual fallback, even if the problem has a ":".
+    const sub = makePractice({ misconceptionId: "insufficient_evidence", operation: "subtraction", seed, avoid: "52 - 17" })!;
+    assert.equal(sub.misconceptionId, "sub_smaller_from_larger");
+    const intDiv = makePractice({ misconceptionId: "insufficient_evidence", operation: "division", seed, avoid: "29 : 4" })!;
+    assert.equal(intDiv.misconceptionId, "div_remainder_ignored");
+  }
 });

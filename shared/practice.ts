@@ -79,6 +79,15 @@ const BY_OPERATION: Partial<Record<Operation, string>> = {
   exponents: "exp_multiply_base_by_exponent",
 };
 
+/** Same problem written another way: spaces, "x", "*" or "·" for ×, or the two factors swapped. */
+export function sameProblem(a: string, b: string): boolean {
+  // Only a sign between two digits is a multiplication; the x in "2x + 7" stays a variable.
+  const norm = (s: string) => s.replace(/\s+/g, "").replace(/(?<=\d)[xX*·](?=\d)/g, "×");
+  const [x, y] = [norm(a), norm(b)];
+  const product = /^(\d+)×(\d+)$/.exec(x);
+  return x === y || (!!product && y === `${product[2]}×${product[1]}`);
+}
+
 /** A new problem that targets the same misconception, never the student's original one. */
 export function makePractice(opts: {
   misconceptionId: string;
@@ -87,14 +96,21 @@ export function makePractice(opts: {
   seed?: number;
   avoid?: string;
 }): Practice | null {
-  const id = MAKERS[opts.misconceptionId] ? opts.misconceptionId : BY_OPERATION[opts.operation];
+  // With no clear misconception the operation picks the problem; a fraction division
+  // should not be practised with a fraction addition.
+  const fractionDivision =
+    opts.misconceptionId === "insufficient_evidence" && opts.operation === "fractions" && /[÷:]/.test(opts.avoid ?? "");
+  const id = MAKERS[opts.misconceptionId]
+    ? opts.misconceptionId
+    : fractionDivision
+      ? "frac_div_not_inverted"
+      : BY_OPERATION[opts.operation];
   if (!id || !findMisconception(id)) return null;
   const random = rng(opts.seed ?? Date.now());
   const pick: Pick = (min, max) => min + Math.floor(random() * (max - min + 1));
-  const avoid = opts.avoid?.replace(/\s+/g, "");
   for (let i = 0; i < 20; i++) {
     const problem = MAKERS[id](pick, opts.level ?? 1);
-    if (problem.replace(/\s+/g, "") === avoid) continue;
+    if (opts.avoid && sameProblem(problem, opts.avoid)) continue;
     const answer = solveProblem(problem);
     return { problem, answer, answerText: answerText(answer), misconceptionId: id };
   }
